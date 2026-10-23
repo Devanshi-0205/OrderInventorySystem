@@ -1,5 +1,4 @@
 # ── Environment & secrets ─────────────────────────────────────────────────────
-# .env.example MUST be committed — it documents required variables for new developers
 .env
 .env.*
 !.env.example
