@@ -7,7 +7,7 @@ A full-stack Order & Inventory Management System built with **Vue 3** (frontend)
 | Layer | Technology |
 |---|---|
 | Frontend | Vue 3.5, Vite 8, Vue Router 4, Pinia, Axios, PrimeVue 4 (Aura theme) |
-| Backend | Laravel 13, PHP 8.3, Laravel Sanctum 4 (token auth) |
+| Backend | Laravel 13, PHP 8.3 or above, Laravel Sanctum 4 (token auth) |
 | Database | MySQL (via WAMP Server) |
 | Testing | PHPUnit 12 (backend), Vitest (frontend) |
 | Linting | ESLint + eslint-plugin-vue (frontend), Laravel Pint (backend) |
@@ -42,8 +42,8 @@ order-inventory-system/
 
 ## Prerequisites
 
-- **WAMP Server** running (MySQL + Apache)
-- **PHP 8.3** and **Composer 2.x**
+- **WAMP/XAMPP Server** running (MySQL + Apache)
+- **PHP 8.3 or above** and **Composer 2.x**
 - **Node.js ≥ 22.18.0** — use nvm-windows: `nvm install 22 && nvm use 22.23.4`
 - **Git**
 
@@ -128,28 +128,6 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | POST | `/orders` | Yes | any | Place order (stock deducted atomically) |
 | GET | `/orders/{id}` | Yes | any | Order detail |
 | PATCH | `/orders/{id}/status` | Yes | admin | Update order status |
-
-### Request / Response shapes
-
-**Login** `POST /api/login`
-```json
-{ "email": "admin@example.com", "password": "password" }
-```
-Response:
-```json
-{ "data": { "user": { "id": 1, "name": "Admin", "role": "admin" }, "token": "…" }, "message": "Login successful." }
-```
-
-**Create Order** `POST /api/orders`
-```json
-{ "items": [{ "product_id": 1, "quantity": 2 }, { "product_id": 3, "quantity": 1 }] }
-```
-> Never send prices or totals — the backend calculates them from trusted database prices.
-
-**Insufficient stock** → `409 Conflict`
-```json
-{ "message": "Insufficient stock for product \"Wireless Mouse\". Available: 3, Requested: 5." }
-```
 
 ## Available Application Screens
 
