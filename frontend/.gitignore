@@ -26,4 +26,4 @@ __screenshots__/
 # ── ESLint cache ──────────────────────────────────────────────────────────────
 .eslintcache
 
-./.cursor/*
+cursor/skills/*
