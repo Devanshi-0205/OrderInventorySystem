@@ -52,7 +52,7 @@ order-inventory-system/
 ### 1. Clone
 
 ```bash
-git clone https://github.com/Devanshi-0205/order-inventory-system.git
+git clone https://github.com/Devanshi-0205/OrderInventorySystem.git
 cd order-inventory-system
 ```
 
