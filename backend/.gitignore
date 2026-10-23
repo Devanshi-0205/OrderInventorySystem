@@ -1,0 +1,49 @@
+# ── Environment & secrets ─────────────────────────────────────────────────────
+# .env.example MUST be committed — it documents required variables for new developers
+.env
+.env.*
+!.env.example
+/auth.json
+/storage/*.key
+
+# ── PHP dependencies ──────────────────────────────────────────────────────────
+/vendor/
+
+# ── Build & compiled assets ───────────────────────────────────────────────────
+/public/build/
+/public/hot/
+/public/storage
+/public/fonts-manifest.dev.json
+
+# ── Storage — runtime files (keep placeholder .gitignore files in each dir) ───
+/storage/logs/*
+!/storage/logs/.gitignore
+
+/storage/app/public/*
+!/storage/app/public/.gitignore
+
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitignore
+/storage/framework/cache/locks/*
+!/storage/framework/cache/locks/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/testing/*
+!/storage/framework/testing/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/pail/
+
+# ── Bootstrap cache (keep placeholder .gitignore) ─────────────────────────────
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# ── PHPUnit ───────────────────────────────────────────────────────────────────
+.phpunit.result.cache
+/.phpunit.cache
+
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
