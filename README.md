@@ -67,6 +67,8 @@ Copy and configure environment:
 
 ```bash
 copy .env.example .env
+```
+also uncomment the Database setup attributes.
 
 php artisan key:generate
 php artisan migrate --seed
