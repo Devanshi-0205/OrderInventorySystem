@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -62,6 +63,35 @@ class ProductController extends Controller
             'data' => array_merge($product->toArray(), [
                 'stock_status' => $product->stock_status,
             ]),
+        ]);
+    }
+
+    /**
+     * Update an existing product (admin only).
+     * PUT /api/products/{id}
+     */
+    public function update(UpdateProductRequest $request, Product $product): JsonResponse
+    {
+        $product->update($request->validated());
+
+        return response()->json([
+            'data'    => array_merge($product->fresh()->toArray(), [
+                'stock_status' => $product->fresh()->stock_status,
+            ]),
+            'message' => 'Product updated successfully.',
+        ]);
+    }
+
+    /**
+     * Delete a product (admin only).
+     * DELETE /api/products/{id}
+     */
+    public function destroy(Product $product): JsonResponse
+    {
+        $product->delete();
+
+        return response()->json([
+            'message' => 'Product deleted successfully.',
         ]);
     }
 }
