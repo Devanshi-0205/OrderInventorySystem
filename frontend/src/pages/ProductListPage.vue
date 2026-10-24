@@ -3,6 +3,8 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useProductStore } from '@/stores/products.js'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import AppLayout from '@/components/AppLayout.vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -10,10 +12,13 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Tag from 'primevue/tag'
+import ConfirmDialog from 'primevue/confirmdialog'
 
-const auth = useAuthStore()
-const store = useProductStore()
-const router = useRouter()
+const auth    = useAuthStore()
+const store   = useProductStore()
+const router  = useRouter()
+const toast   = useToast()
+const confirm = useConfirm()
 
 const search = ref('')
 const stockFilter = ref(null)
@@ -46,6 +51,25 @@ watch(search, () => {
 watch(stockFilter, () => load())
 
 function onPage(e) { load(e.page + 1) }
+
+function confirmDelete(product) {
+  confirm.require({
+    message: `Are you sure you want to delete "${product.name}"? This action cannot be undone.`,
+    header: 'Delete Product',
+    icon: 'pi pi-exclamation-triangle',
+    acceptSeverity: 'danger',
+    acceptLabel: 'Delete',
+    rejectLabel: 'Cancel',
+    accept: async () => {
+      try {
+        await store.removeProduct(product.id)
+        toast.add({ severity: 'success', summary: 'Product deleted successfully.', life: 3000 })
+      } catch {
+        toast.add({ severity: 'error', summary: store.error ?? 'Failed to delete product.', life: 4000 })
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -103,15 +127,40 @@ function onPage(e) { load(e.page + 1) }
             />
           </template>
         </Column>
-        <Column header="" style="width: 80px;">
+        <!-- View action (always visible) -->
+        <Column header="" :style="auth.isAdmin ? 'width: 130px;' : 'width: 80px;'">
           <template #body="{ data }">
-            <Button
-              icon="pi pi-eye"
-              text
-              rounded
-              size="small"
-              @click="router.push({ name: 'product-detail', params: { id: data.id } })"
-            />
+            <div class="row-actions">
+              <Button
+                icon="pi pi-eye"
+                text
+                rounded
+                size="small"
+                v-tooltip.top="'View'"
+                @click="router.push({ name: 'product-detail', params: { id: data.id } })"
+              />
+              <!-- Edit & Delete — admin only -->
+              <template v-if="auth.isAdmin">
+                <Button
+                  icon="pi pi-pencil"
+                  text
+                  rounded
+                  size="small"
+                  severity="secondary"
+                  v-tooltip.top="'Edit'"
+                  @click="router.push({ name: 'product-edit', params: { id: data.id } })"
+                />
+                <Button
+                  icon="pi pi-trash"
+                  text
+                  rounded
+                  size="small"
+                  severity="danger"
+                  v-tooltip.top="'Delete'"
+                  @click="confirmDelete(data)"
+                />
+              </template>
+            </div>
           </template>
         </Column>
       </DataTable>
@@ -119,6 +168,9 @@ function onPage(e) { load(e.page + 1) }
 
     <p v-if="store.error" class="error-msg">{{ store.error }}</p>
   </AppLayout>
+
+  <!-- Confirmation dialog (rendered outside AppLayout for proper overlay) -->
+  <ConfirmDialog />
 </template>
 
 <style scoped>
@@ -128,4 +180,5 @@ function onPage(e) { load(e.page + 1) }
 .stock-select { min-width: 160px; }
 .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
 .error-msg { color: #ef4444; margin-top: 0.75rem; }
+.row-actions { display: flex; align-items: center; gap: 0.1rem; }
 </style>

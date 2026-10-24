@@ -1,19 +1,46 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.js'
 import { useProductStore } from '@/stores/products.js'
+import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 import AppLayout from '@/components/AppLayout.vue'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
+import ConfirmDialog from 'primevue/confirmdialog'
 
-const route  = useRoute()
-const router = useRouter()
-const store  = useProductStore()
+const route   = useRoute()
+const router  = useRouter()
+const auth    = useAuthStore()
+const store   = useProductStore()
+const toast   = useToast()
+const confirm = useConfirm()
 
 onMounted(() => store.fetchProduct(route.params.id))
 
 const stockSeverity = { in_stock: 'success', low_stock: 'warn', out_of_stock: 'danger' }
 const stockLabel    = { in_stock: 'In Stock', low_stock: 'Low Stock', out_of_stock: 'Out of Stock' }
+
+function confirmDelete() {
+  confirm.require({
+    message: `Are you sure you want to delete "${store.currentProduct?.name}"? This action cannot be undone.`,
+    header: 'Delete Product',
+    icon: 'pi pi-exclamation-triangle',
+    acceptSeverity: 'danger',
+    acceptLabel: 'Delete',
+    rejectLabel: 'Cancel',
+    accept: async () => {
+      try {
+        await store.removeProduct(route.params.id)
+        toast.add({ severity: 'success', summary: 'Product deleted successfully.', life: 3000 })
+        router.push({ name: 'products' })
+      } catch {
+        toast.add({ severity: 'error', summary: store.error ?? 'Failed to delete product.', life: 4000 })
+      }
+    },
+  })
+}
 </script>
 
 <template>
@@ -21,6 +48,25 @@ const stockLabel    = { in_stock: 'In Stock', low_stock: 'Low Stock', out_of_sto
     <template #header>
       <Button icon="pi pi-arrow-left" text @click="router.back()" style="margin-right: 0.5rem;" />
       <h1 class="page-title">Product Detail</h1>
+      <!-- Admin actions -->
+      <template v-if="auth.isAdmin && store.currentProduct">
+        <Button
+          label="Edit"
+          icon="pi pi-pencil"
+          severity="secondary"
+          size="small"
+          style="margin-left: auto; margin-right: 0.5rem;"
+          @click="router.push({ name: 'product-edit', params: { id: route.params.id } })"
+        />
+        <Button
+          label="Delete"
+          icon="pi pi-trash"
+          severity="danger"
+          size="small"
+          :loading="store.loading"
+          @click="confirmDelete"
+        />
+      </template>
     </template>
 
     <div v-if="store.loading" class="skeleton-card" />
@@ -58,6 +104,9 @@ const stockLabel    = { in_stock: 'In Stock', low_stock: 'Low Stock', out_of_sto
       </div>
     </div>
   </AppLayout>
+
+  <!-- Confirmation dialog (rendered outside AppLayout for proper overlay) -->
+  <ConfirmDialog />
 </template>
 
 <style scoped>
