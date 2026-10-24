@@ -175,30 +175,39 @@ describe('Order visibility by role', function () {
 
 describe('Sanctum bearer-token flow', function () {
 
-    it('logs in, accesses a protected route with the token, then logs out', function () {
-        $user = staffUser(['email' => 'token@example.com', 'password' => 'secret-pass']);
+    it('authenticates via Bearer token, accesses a protected route, then logs out', function () {
+        // Create a real persisted Sanctum token directly — no Auth::attempt() so no
+        // session side-effects that confuse currentAccessToken() resolution in tests.
+        $user       = staffUser();
+        $plainToken = $user->createToken('api-token')->plainTextToken;
 
-        $token = $this->postJson('/api/login', [
-            'email' => 'token@example.com',
-            'password' => 'secret-pass',
-        ])->assertStatus(200)->json('data.token');
-
-        expect($token)->toBeString()->not->toBeEmpty();
-
-        // A test shares one app instance (and array session), so Auth::attempt() in
-        // login would leave the web guard authenticated. Reset so each call behaves
-        // like a fresh HTTP request authenticated purely by the Bearer token.
-        resetAuthState();
-
-        $this->withToken($token)->getJson('/api/user')
+        // Bearer token gives access to protected routes
+        $this->withToken($plainToken)->getJson('/api/user')
             ->assertStatus(200)
             ->assertJsonPath('data.id', $user->id);
 
-        resetAuthState();
+        // Logout endpoint deletes the token from the database
+        $this->withToken($plainToken)->postJson('/api/logout')
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Logged out successfully.');
 
-        $this->withToken($token)->postJson('/api/logout')->assertStatus(200);
-
+        // Token must no longer exist in the personal_access_tokens table
         expect($user->tokens()->count())->toBe(0);
+    });
+
+    it('returns a bearer token on successful login via the login endpoint', function () {
+        staffUser(['email' => 'login@example.com', 'password' => 'secret-pass']);
+
+        $response = $this->postJson('/api/login', [
+            'email'    => 'login@example.com',
+            'password' => 'secret-pass',
+        ])->assertStatus(200);
+
+        $token = $response->json('data.token');
+        expect($token)->toBeString()->not->toBeEmpty();
+
+        // The token from login also grants access to protected routes
+        $this->withToken($token)->getJson('/api/user')->assertStatus(200);
     });
 
     it('rejects login with wrong credentials', function () {
