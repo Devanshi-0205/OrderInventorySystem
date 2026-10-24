@@ -15,6 +15,8 @@ class Product extends Model
         'stock_quantity',
     ];
 
+    protected $appends = ['stock_status'];
+    
     protected function casts(): array
     {
         return [

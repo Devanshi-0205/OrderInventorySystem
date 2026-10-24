@@ -30,8 +30,17 @@ const stockOptions = [
   { label: 'Out of Stock', value: 'out_of_stock' },
 ]
 
-const stockSeverity = { in_stock: 'success', low_stock: 'warn', out_of_stock: 'danger' }
+const stockSeverity = { in_stock: 'success', low_stock: 'warning', out_of_stock: 'danger' }
 const stockLabel    = { in_stock: 'In Stock', low_stock: 'Low Stock', out_of_stock: 'Out of Stock' }
+
+/** Derive stock status from quantity — mirrors the backend accessor logic.
+ *  Used as a fallback when the API response omits the stock_status field. */
+function deriveStockStatus(qty) {
+  const q = Number(qty)
+  if (q === 0)  return 'out_of_stock'
+  if (q <= 10)  return 'low_stock'
+  return 'in_stock'
+}
 
 function load(page = 1) {
   store.fetchProducts({
@@ -122,8 +131,8 @@ function confirmDelete(product) {
         <Column header="Status" style="width: 130px;">
           <template #body="{ data }">
             <Tag
-              :value="stockLabel[data.stock_status] ?? data.stock_status"
-              :severity="stockSeverity[data.stock_status] ?? 'info'"
+              :value="stockLabel[data.stock_status ?? deriveStockStatus(data.stock_quantity)]"
+              :severity="stockSeverity[data.stock_status ?? deriveStockStatus(data.stock_quantity)] ?? 'info'"
             />
           </template>
         </Column>
