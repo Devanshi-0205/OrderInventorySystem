@@ -127,6 +127,8 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | GET | `/products` | Yes | any | List products (search + filter) |
 | POST | `/products` | Yes | admin | Create product |
 | GET | `/products/{id}` | Yes | any | Product detail |
+| PUT | `/products/{id}` | Yes | admin | Update product (full replace) |
+| DELETE | `/products/{id}` | Yes | admin | Delete product |
 | GET | `/orders` | Yes | any | List orders (admins see all) |
 | POST | `/orders` | Yes | any | Place order (stock deducted atomically) |
 | GET | `/orders/{id}` | Yes | any | Order detail |
@@ -140,7 +142,8 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 | `/` | Dashboard — summary stats | Any |
 | `/products` | Product list with search & stock filter | Any |
 | `/products/new` | Create product form | Admin |
-| `/products/:id` | Product detail | Any |
+| `/products/:id` | Product detail with Edit/Delete actions | Any (actions: Admin) |
+| `/products/:id/edit` | Edit existing product form | Admin |
 | `/orders` | Order list with status filter | Any |
 | `/orders/new` | Create order — select products + quantities | Any |
 | `/orders/:id` | Order detail + admin status update | Any |

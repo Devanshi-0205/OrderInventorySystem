@@ -33,6 +33,12 @@ const routes = [
     meta: { requiresAuth: true, title: 'Product Detail' },
   },
   {
+    path: '/products/:id/edit',
+    name: 'product-edit',
+    component: () => import('@/pages/ProductFormPage.vue'),
+    meta: { requiresAuth: true, role: 'admin', title: 'Edit Product' },
+  },
+  {
     path: '/orders',
     name: 'orders',
     component: () => import('@/pages/OrderListPage.vue'),
