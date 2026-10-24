@@ -1,13 +1,45 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <title>Order & Stock Management System</title>
+    <meta name="application-name" content="Order Inventory">
+    <meta name="apple-mobile-web-app-title" content="Order Inventory">
+    <meta name="theme-color" content="#1e293b">
+    <link rel="icon" type="image/svg+xml" href="/order-inventory-icon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <style>
+      /* Splash shown inside #app until Vue mounts and replaces it */
+      .app-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: #1e293b;
+        color: #f1f5f9;
+        font-family: system-ui, sans-serif;
+      }
+      .app-splash img { width: 88px; height: 88px; animation: splash-pulse 1.4s ease-in-out infinite; }
+      .app-splash span { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.02em; }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.06); opacity: 0.85; }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="app-splash">
+        <img src="/order-inventory-icon.svg" alt="Order Inventory logo">
+        <span>OrderInventory</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
