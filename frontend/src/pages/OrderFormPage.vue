@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOrderStore } from '@/stores/orders.js'
 import { useProductStore } from '@/stores/products.js'
@@ -11,6 +11,7 @@ import Button from 'primevue/button'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Message from 'primevue/message'
+import Dialog from 'primevue/dialog'
 
 const orderStore   = useOrderStore()
 const productStore = useProductStore()
@@ -22,17 +23,34 @@ const selected = ref(null) // product chosen in dropdown
 const qty      = ref(1)
 const error    = ref(null)
 
+// Stock-exceeded popup state
+const stockWarnVisible = ref(false)
+
 onMounted(() => productStore.fetchProducts({ stock_status: 'in_stock', page: 1 }))
 
 const availableProducts = computed(() =>
   productStore.products.filter(p => !items.value.find(i => i.product.id === p.id))
 )
 
+// Watch qty as the user types — show popup the moment it exceeds available stock
+watch(qty, (newVal) => {
+  if (selected.value && newVal !== null && newVal > selected.value.stock_quantity) {
+    stockWarnVisible.value = true
+  }
+})
+
+// Called when dialog closes (OK button OR ✕ header button) — auto-correct qty to max
+function onStockWarnHide() {
+  if (selected.value && qty.value > selected.value.stock_quantity) {
+    qty.value = selected.value.stock_quantity
+  }
+}
+
 function addItem() {
   if (!selected.value || qty.value < 1) return
+  // Safety net: correct any residual over-stock value before committing
   if (qty.value > selected.value.stock_quantity) {
-    toast.add({ severity: 'warn', summary: `Only ${selected.value.stock_quantity} units available.`, life: 3000 })
-    return
+    qty.value = selected.value.stock_quantity
   }
   items.value.push({ product: selected.value, quantity: qty.value })
   selected.value = null
@@ -96,9 +114,38 @@ async function handleSubmit() {
           </template>
         </Select>
 
-        <InputNumber v-model="qty" :min="1" :max="selected?.stock_quantity ?? 9999" showButtons class="qty-input" />
+        <InputNumber v-model="qty" :min="1" showButtons class="qty-input" />
         <Button label="Add" icon="pi pi-plus" @click="addItem" :disabled="!selected" />
       </div>
+
+      <!-- Stock exceeded popup — fires automatically while typing -->
+      <Dialog
+        v-model:visible="stockWarnVisible"
+        modal
+        :closable="true"
+        header="Quantity Exceeds Stock"
+        :style="{ width: '28rem' }"
+        @hide="onStockWarnHide"
+      >
+        <div class="stock-warn-body">
+          <i class="pi pi-exclamation-circle stock-warn-icon" />
+          <p>
+            The ordered quantity <strong>({{ qty }})</strong> exceeds the available
+            stock for <strong>{{ selected?.name }}</strong>.
+          </p>
+          <p class="stock-warn-sub">
+            Quantity will be set to the maximum available:
+            <strong>{{ selected?.stock_quantity }} units</strong>.
+          </p>
+        </div>
+        <template #footer>
+          <Button
+            :label="`OK — Use Max (${selected?.stock_quantity} units)`"
+            icon="pi pi-check"
+            @click="stockWarnVisible = false"
+          />
+        </template>
+      </Dialog>
 
       <!-- Order items table -->
       <DataTable :value="items" class="items-table" emptyMessage="No items added yet.">
@@ -131,7 +178,6 @@ async function handleSubmit() {
         <span>Estimated Total</span>
         <span class="total-value">$ {{ estimatedTotal.toFixed(2) }}</span>
       </div>
-      <p class="total-note">* Final total is calculated by the server using current prices.</p>
 
       <Message v-if="error" severity="error" :closable="false" style="margin-top: 1rem;">{{ error }}</Message>
 
@@ -158,6 +204,10 @@ async function handleSubmit() {
 .product-select { flex: 1; min-width: 220px; }
 .qty-input { width: 130px; }
 .opt-meta { color: #94a3b8; display: block; font-size: 0.78rem; }
+.stock-warn-body { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; padding: 0.5rem 0 1rem; }
+.stock-warn-icon { font-size: 2.5rem; color: #f59e0b; }
+.stock-warn-body p { margin: 0; color: #374151; line-height: 1.5; }
+.stock-warn-sub { font-size: 0.85rem; color: #64748b !important; }
 .items-table { margin-bottom: 0.5rem; }
 .total-row { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; padding: 0.75rem 0; border-top: 1px solid #e2e8f0; font-weight: 600; color: #1e293b; }
 .total-value { font-size: 1.2rem; color: #10b981; }
