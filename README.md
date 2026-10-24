@@ -7,9 +7,9 @@ A full-stack Order & Inventory Management System built with **Vue 3** (frontend)
 | Layer | Technology |
 |---|---|
 | Frontend | Vue 3.5, Vite 8, Vue Router 4, Pinia, Axios, PrimeVue 4 (Aura theme) |
-| Backend | Laravel 13, PHP 8.3 or above, Laravel Sanctum 4 (token auth) |
+| Backend | Laravel 13, PHP 8.4 or above (required by Pest 5 / PHPUnit 13), Laravel Sanctum 4 (token auth) |
 | Database | MySQL (via WAMP Server) |
-| Testing | PHPUnit 12 (backend), Vitest (frontend) |
+| Testing | **PestPHP v5.3** + `pest-plugin-laravel` 5.0 on PHPUnit 13 (backend), Vitest (frontend) |
 | Linting | ESLint + eslint-plugin-vue (frontend), Laravel Pint (backend) |
 | Node.js | ≥ 22.18.0 required — use `nvm use 22.23.4` (nvm-windows) |
 
@@ -43,7 +43,7 @@ order-inventory-system/
 ## Prerequisites
 
 - **WAMP/XAMPP Server** running (MySQL + Apache)
-- **PHP 8.3 or above** and **Composer 2.x**
+- **PHP 8.4 or above** and **Composer 2.x**
 - **Node.js ≥ 22.18.0** — use nvm-windows: `nvm install 22 && nvm use 22.23.4`
 - **Git**
 
@@ -154,10 +154,44 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 
 ```bash
 cd backend
-php artisan test          # run PHPUnit tests
+
+# Run the full PestPHP v5 suite (66 tests, 197 assertions)
+./vendor/bin/pest
+
+# Equivalent via composer script
+composer test
+
+# Run a specific test file
+./vendor/bin/pest tests/Feature/OrderTest.php
+
+# Run tests matching a description keyword
+./vendor/bin/pest --filter "insufficient stock"
+
 php artisan migrate:fresh --seed   # reset DB + reseed (local only)
-./vendor/bin/pint         # format PHP (Laravel Pint)
+./vendor/bin/pint                  # format PHP (Laravel Pint)
 ```
+
+#### Backend tests (PestPHP v5)
+
+Tests live in `backend/tests/Feature/`, run against an in-memory SQLite database (see `phpunit.xml`)
+and use `RefreshDatabase`, so your MySQL data is never touched. Shared helpers (`adminUser()`,
+`staffUser()`) and the `TestCase` / `RefreshDatabase` setup are in `backend/tests/Pest.php`.
+Model factories exist for `User`, `Product`, `Order` and `OrderItem`.
+
+| Test file | Business rules covered |
+|---|---|
+| `ProductTest.php` | Product validation (required fields, negative price/stock, SKU length, duplicate SKU → 422), CRUD |
+| `OrderTest.php` | Order with valid stock → 201 and stock deducted; insufficient stock → 409 and stock unchanged; multi-item rollback |
+| `OrderRollbackTest.php` | Client price/total ignored; stock restored if the DB write fails after deduction; no stack-trace leak; quantity validation |
+| `InventoryConcurrencyTest.php` | Stock never goes negative when many users compete for scarce stock; duplicate lines in one order; lock/transaction path |
+| `AuthorizationTest.php` | Unauthenticated → 401; staff on admin routes → 403 (no side effects); staff only see own orders; Sanctum login → token → logout |
+
+> **Concurrency note:** a single PHP test process cannot issue truly parallel HTTP requests, and SQLite
+> ignores `SELECT … FOR UPDATE`. The concurrency tests therefore verify the invariants the row lock
+> guarantees (no overselling, no negative stock, no lost updates) by firing competing requests
+> back-to-back. The `FOR UPDATE` clause itself is asserted only when tests run on MySQL.
+>
+> **PHP version:** Pest 5 requires PHP ^8.4 and PHPUnit 13 requires ≥ 8.4.1.
 
 ### Frontend
 
